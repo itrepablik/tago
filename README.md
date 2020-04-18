@@ -10,6 +10,33 @@ go get -u github.com/itrepablik/tago
 ```
 package main
 
+import (
+	"fmt"
+
+	"github.com/itrepablik/itrlog"
+	"github.com/itrepablik/tago"
+)
+
+// Keep this secret
+const secretKey string = "abc&1*~#^2^#s0^=)^^7%b34"
+
+func main() {
+	phrase := "Hello World!"
+
+	// To encrypt the classified text
+	encText, err := tago.Encrypt(phrase, secretKey)
+	if err != nil {
+		itrlog.Fatalw("error encrypting your classified text: ", err)
+	}
+	fmt.Println("encrypted text: ", encText)
+
+	// To decrypt the encrypted classified text
+	dText, err := tago.Decrypt(encText, secretKey)
+	if err != nil {
+		itrlog.Fatalw("error decrypting your encrypted text: ", err)
+	}
+	fmt.Println("decrypted text: ", dText)
+}
 ```
 
 # License
