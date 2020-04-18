@@ -1,3 +1,3 @@
-module github.com/itrepablik/lisensya
+module github.com/itrepablik/tago
 
 go 1.14
