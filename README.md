@@ -17,7 +17,7 @@ import (
 	"github.com/itrepablik/tago"
 )
 
-// Keep this secret
+// Keep this secret key with you.
 const secretKey string = "abc&1*~#^2^#s0^=)^^7%b34"
 
 func main() {
