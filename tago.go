@@ -12,12 +12,12 @@ func encodeBase64(b []byte) string {
 	return base64.StdEncoding.EncodeToString(b)
 }
 
-func decodeBase64(s string) []byte {
+func decodeBase64(s string) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		return []byte{}, err
 	}
-	return data
+	return data, nil
 }
 
 // Encrypt is the encryptor of any classified text, keep your secret key within your app
@@ -41,7 +41,13 @@ func Decrypt(text, secretKey string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ciphertext := decodeBase64(text)
+
+	// Check if string is a valid base64 input
+	ciphertext, err := decodeBase64(text)
+	if err != nil {
+		return "", err
+	}
+
 	cfb := cipher.NewCFBDecrypter(block, iv)
 	plaintext := make([]byte, len(ciphertext))
 	cfb.XORKeyStream(plaintext, ciphertext)
