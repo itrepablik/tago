@@ -1,4 +1,4 @@
-![Tago](https://user-images.githubusercontent.com/58651329/79629301-1d414a00-817b-11ea-9e57-af0dd776d4e9.png)
+![Tago](https://user-images.githubusercontent.com/58651329/80477734-0cfd4c00-897f-11ea-84f6-ce4fb6c495bb.png)
 Use **tago** to encrypt any classified text with your especial secret keys for mixture to formulate the encrypted text and able to decrypt it with the same secret key when you need to extract the whole classified text back to a normal phrase.
 
 # Installation
