@@ -1,5 +1,5 @@
 ![Tago](https://user-images.githubusercontent.com/58651329/80477734-0cfd4c00-897f-11ea-84f6-ce4fb6c495bb.png)
-Use **tago** to encrypt any classified text with your especial secret keys for mixture to formulate the encrypted text and able to decrypt it with the same secret key when you need to extract the whole classified text back to a normal phrase.
+Use **tago** to encrypt any classified text with secured random secret keys for the mixture to formulate the encrypted text and able to decrypt it with the same secret key when you need to extract the whole classified text back to a normal phrase.
 
 # Installation
 ```
@@ -12,30 +12,44 @@ package main
 
 import (
 	"fmt"
+	"log"
 
-	"github.com/itrepablik/itrlog"
 	"github.com/itrepablik/tago"
 )
 
-// Keep this secret key with you.
-const secretKey string = "abc&1*~#^2^#s0^=)^^7%b34"
-
 func main() {
-	phrase := "Hello World!"
-
-	// To encrypt the classified text
-	encText, err := tago.Encrypt(phrase, secretKey)
+	// Generate a secure random salt
+	secretKey, err := tago.GenerateSecretKey(32)
 	if err != nil {
-		itrlog.Fatalw("error encrypting your classified text: ", err)
+		log.Fatalf("error generating secret key: %s", err)
 	}
-	fmt.Println("encrypted text: ", encText)
 
-	// To decrypt the encrypted classified text
-	dText, err := tago.Decrypt(encText, secretKey)
+	// ************************************************************************
+	// Encrypt a string
+	// ************************************************************************
+	plaintext := "Hello World!"
+	ciphertext, iv, err := tago.Encrypt(plaintext, string(secretKey))
 	if err != nil {
-		itrlog.Fatalw("error decrypting your encrypted text: ", err)
+		log.Fatalf("error encrypting string: %s", err)
 	}
-	fmt.Println("decrypted text: ", dText)
+	if ciphertext == plaintext {
+		log.Fatalln("plaintext and ciphertext should not be the same")
+	}
+
+	fmt.Printf("plaintext: %s\nciphertext: %s\niv: %s", plaintext, ciphertext, iv)
+
+	// ************************************************************************
+	// Decrypt a ciphertext
+	// ************************************************************************
+	decrypted, err := tago.Decrypt(ciphertext, string(secretKey), iv)
+	if err != nil {
+		log.Fatalf("error decrypting string: %s", err)
+	}
+	if decrypted != plaintext {
+		log.Fatalln("plaintext and decrypted should be the same")
+	}
+
+	fmt.Println("\ndecrypted:", decrypted)
 }
 ```
 
