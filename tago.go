@@ -3,47 +3,89 @@ package tago
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
+	"errors"
+	"strings"
 )
 
-var iv = []byte{35, 46, 57, 24, 85, 35, 24, 74, 87, 35, 88, 98, 66, 32, 14, 05}
-
-func encodeBase64(b []byte) string {
-	return base64.StdEncoding.EncodeToString(b)
-}
-
-func decodeBase64(s string) ([]byte, error) {
-	data, err := base64.StdEncoding.DecodeString(s)
+// GenerateIV is the function to generate a random IV
+// The AES block size in bytes is 16
+func GenerateIV() ([]byte, error) {
+	iv, err := generateSecureRandomBytes(aes.BlockSize)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
-	return data, nil
+	return iv, nil
 }
 
-// Encrypt is the encryptor of any classified text, keep your secret key within your app
-// and use it later when you want to decrypt the encrypted classified text.
-func Encrypt(text, secretKey string) (string, error) {
+// GenerateSecretKey is the function to generate a secured random secret key
+// either 16, 24, or 32 bytes to select AES-128, AES-192 or AES-256
+func GenerateSecretKey(byteSize int) (string, error) {
+	if byteSize != 16 && byteSize != 24 && byteSize != 32 {
+		return "", errors.New("secret key must be 16, 24 or 32 bytes")
+	}
+
+	secretKey, err := generateSecureRandomBytes(byteSize)
+	if err != nil {
+		return "", err
+	}
+	return string(secretKey), nil
+}
+
+func generateSecureRandomBytes(byteSize int) ([]byte, error) {
+	b := make([]byte, byteSize)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+// Encrypt is the encryptor of the classified text, remember to use the same secret key
+// Save the IV somewhere safe, it will be used to decrypt the text
+func Encrypt(text, secretKey string, iv []byte) (string, error) {
+	// Check if the length of the secret key is 16, 24 or 32
+	if len(secretKey) != 16 && len(secretKey) != 24 && len(secretKey) != 32 {
+		return "", errors.New("secret key must be 16, 24 or 32 bytes")
+	}
+
+	// Check if the text is empty
+	if strings.TrimSpace(text) == "" {
+		return "", errors.New("text must not be empty")
+	}
+
 	block, err := aes.NewCipher([]byte(secretKey))
 	if err != nil {
 		return "", err
 	}
+
 	plaintext := []byte(text)
 	cfb := cipher.NewCFBEncrypter(block, iv)
 	ciphertext := make([]byte, len(plaintext))
 	cfb.XORKeyStream(ciphertext, plaintext)
-	return encodeBase64(ciphertext), nil
+
+	return base64.RawStdEncoding.EncodeToString(ciphertext), nil
 }
 
-// Decrypt is the decryptor of the encrypted classified text, remember to use the same secret key
-// you've been using during the encryption process.
-func Decrypt(text, secretKey string) (string, error) {
+// Decrypt is the decryptor of the classified text, remember to use the same secret key
+func Decrypt(text, secretKey string, iv []byte) (string, error) {
+	// Check if the length of the secret key is 16, 24 or 32
+	if len(secretKey) != 16 && len(secretKey) != 24 && len(secretKey) != 32 {
+		return "", errors.New("secret key must be 16, 24 or 32 bytes")
+	}
+
+	// Check if the text is empty
+	if strings.TrimSpace(text) == "" {
+		return "", errors.New("text must not be empty")
+	}
+
 	block, err := aes.NewCipher([]byte(secretKey))
 	if err != nil {
 		return "", err
 	}
 
-	// Check if string is a valid base64 input
-	ciphertext, err := decodeBase64(text)
+	ciphertext, err := base64.RawStdEncoding.DecodeString(text)
 	if err != nil {
 		return "", err
 	}
