@@ -9,55 +9,28 @@ import (
 	"strings"
 )
 
-// GenerateIV is the function to generate a random IV
-// The AES block size in bytes is 16
-func GenerateIV() ([]byte, error) {
-	iv, err := generateSecureRandomBytes(aes.BlockSize)
-	if err != nil {
-		return nil, err
-	}
-	return iv, nil
-}
-
-// GenerateSecretKey is the function to generate a secured random secret key
-// either 16, 24, or 32 bytes to select AES-128, AES-192 or AES-256
-func GenerateSecretKey(byteSize int) (string, error) {
-	if byteSize != 16 && byteSize != 24 && byteSize != 32 {
-		return "", errors.New("secret key must be 16, 24 or 32 bytes")
-	}
-
-	secretKey, err := generateSecureRandomBytes(byteSize)
-	if err != nil {
-		return "", err
-	}
-	return string(secretKey), nil
-}
-
-func generateSecureRandomBytes(byteSize int) ([]byte, error) {
-	b := make([]byte, byteSize)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
-}
-
 // Encrypt is the encryptor of the classified text, remember to use the same secret key
 // Save the IV somewhere safe, it will be used to decrypt the text
-func Encrypt(text, secretKey string, iv []byte) (string, error) {
+func Encrypt(text, secretKey string) (string, []byte, error) {
 	// Check if the length of the secret key is 16, 24 or 32
 	if len(secretKey) != 16 && len(secretKey) != 24 && len(secretKey) != 32 {
-		return "", errors.New("secret key must be 16, 24 or 32 bytes")
+		return "", nil, errors.New("secret key must be 16, 24 or 32 bytes")
 	}
 
 	// Check if the text is empty
 	if strings.TrimSpace(text) == "" {
-		return "", errors.New("text must not be empty")
+		return "", nil, errors.New("text must not be empty")
 	}
 
 	block, err := aes.NewCipher([]byte(secretKey))
 	if err != nil {
-		return "", err
+		return "", nil, err
+	}
+
+	// The IV needs to be unique
+	iv, err := generateIV()
+	if err != nil {
+		return "", nil, err
 	}
 
 	plaintext := []byte(text)
@@ -65,7 +38,7 @@ func Encrypt(text, secretKey string, iv []byte) (string, error) {
 	ciphertext := make([]byte, len(plaintext))
 	cfb.XORKeyStream(ciphertext, plaintext)
 
-	return base64.RawStdEncoding.EncodeToString(ciphertext), nil
+	return base64.RawStdEncoding.EncodeToString(ciphertext), iv, nil
 }
 
 // Decrypt is the decryptor of the classified text, remember to use the same secret key
@@ -94,4 +67,38 @@ func Decrypt(text, secretKey string, iv []byte) (string, error) {
 	plaintext := make([]byte, len(ciphertext))
 	cfb.XORKeyStream(plaintext, ciphertext)
 	return string(plaintext), nil
+}
+
+// GenerateSecretKey is the function to generate a secured random secret key
+// either 16, 24, or 32 bytes to select AES-128, AES-192 or AES-256
+func GenerateSecretKey(byteSize int) (string, error) {
+	if byteSize != 16 && byteSize != 24 && byteSize != 32 {
+		return "", errors.New("secret key must be 16, 24 or 32 bytes")
+	}
+
+	secretKey, err := generateSecureRandomBytes(byteSize)
+	if err != nil {
+		return "", err
+	}
+	return string(secretKey), nil
+}
+
+// generateSecureRandomBytes is the function to generate a secure random byte array
+func generateSecureRandomBytes(byteSize int) ([]byte, error) {
+	b := make([]byte, byteSize)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
+// generateIV is the function to generate a random IV
+// The AES block size in bytes is 16
+func generateIV() ([]byte, error) {
+	iv, err := generateSecureRandomBytes(aes.BlockSize)
+	if err != nil {
+		return nil, err
+	}
+	return iv, nil
 }

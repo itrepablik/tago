@@ -5,12 +5,6 @@ import (
 )
 
 func TestEncrypt(t *testing.T) {
-	// Generate a secure random IV
-	iv, err := GenerateIV()
-	if err != nil {
-		t.Fatalf("error generating IV: %s", err)
-	}
-
 	// Generate a secure random salt
 	secretKey, err := GenerateSecretKey(32)
 	if err != nil {
@@ -19,24 +13,19 @@ func TestEncrypt(t *testing.T) {
 
 	// Encrypt a string
 	plaintext := "Hello World!"
-	ciphertext, err := Encrypt(plaintext, string(secretKey), iv)
+	ciphertext, iv, err := Encrypt(plaintext, string(secretKey))
 	if err != nil {
 		t.Fatalf("error encrypting string: %s", err)
 	}
+
 	if ciphertext == plaintext {
 		t.Fatalf("plaintext and ciphertext should not be the same")
 	}
 
-	t.Logf("plaintext: %s\nciphertext: %s", plaintext, ciphertext)
+	t.Logf("plaintext: %s\nciphertext: %s\niv: %s", plaintext, ciphertext, iv)
 }
 
 func TestDecrypt(t *testing.T) {
-	// Generate a secure random IV
-	iv, err := GenerateIV()
-	if err != nil {
-		t.Fatalf("error generating IV: %s", err)
-	}
-
 	// Generate a secure random salt
 	secretKey, err := GenerateSecretKey(32)
 	if err != nil {
@@ -45,7 +34,7 @@ func TestDecrypt(t *testing.T) {
 
 	// Encrypt a string
 	plaintext := "Hello World!"
-	ciphertext, err := Encrypt(plaintext, string(secretKey), iv)
+	ciphertext, iv, err := Encrypt(plaintext, string(secretKey))
 	if err != nil {
 		t.Fatalf("error encrypting string: %s", err)
 	}
@@ -78,7 +67,7 @@ func TestGenerateSecretKey(t *testing.T) {
 
 func TestGenerateIV(t *testing.T) {
 	// Generate a secure random IV
-	iv, err := GenerateIV()
+	iv, err := generateIV()
 	if err != nil {
 		t.Fatalf("error generating IV: %s", err)
 	}
